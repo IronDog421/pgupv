@@ -146,9 +146,17 @@ void MyRender::render() {
 		mesh->render();
 	}
 
-	ConstantUniformColorProgram::setColor(glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
-	for (const auto& mesh : meshes_interior) {
-		mesh->render();
+	auto cam = std::static_pointer_cast<XYPanZoomCamera>(getCameraHandler());
+
+	float width = cam->getWidth();
+
+	const float threshold = 500.0f;
+
+	if (width < threshold) {
+		ConstantUniformColorProgram::setColor(glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
+		for (const auto& mesh : meshes_interior) {
+			mesh->render();
+		}
 	}
 }
 

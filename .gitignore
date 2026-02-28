@@ -5,3 +5,5 @@ bin
 log.txt
 properties.ini
 *.pgmat
+
+*.gml
