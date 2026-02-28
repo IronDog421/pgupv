@@ -1,7 +1,7 @@
-
 #include <PGUPV.h>
 #include <GUI3.h>
 #include <iomanip>
+#include "gmlReader.h"
 
 using namespace PGUPV;
 
@@ -17,6 +17,8 @@ private:
 	void buildGUI();
 	std::shared_ptr<GLMatrices> mats;
 	std::unique_ptr<PGUPV::Mesh> boundary;
+	std::vector<std::unique_ptr<PGUPV::Mesh>> meshes_exterior;
+	std::vector<std::unique_ptr<PGUPV::Mesh>> meshes_interior;
 	std::shared_ptr<Label> cursorPos;
 	glm::uvec2 windowSize{ 0 };
 
@@ -68,15 +70,65 @@ void MyRender::setup() {
 	boundary = std::make_unique<PGUPV::Mesh>();
 	auto ll = glm::vec2{ -50.f, -50.0f};
 	auto ur = glm::vec2{ 50.f, 50.0f};
-	boundary->addVertices(
-		{ ll,
-		glm::vec2{ur.x, ll.y}, 
-		ur,	
-		glm::vec2{ll.x, ur.y}});
+
+
+	auto city = readBuildings(App::assetsDir() + "data_gis/A.ES.SDGC.BU.46900.buildingpart.gml", true);
+
+	boundary->addVertices( {
+		{ city.min.x, city.min.y },
+		{ city.max.x, city.min.y },
+		{ city.max.x, city.max.y },
+		{ city.min.x, city.max.y }
+		});
 	boundary->addDrawCommand(new PGUPV::DrawArrays(GL_LINE_LOOP, 0, 4));
+
+	auto buildings = city.buildings.size();
+	meshes_exterior.clear();
+	meshes_interior.clear();
+	glm::dvec2 origen = city.min;
+	for (int i = 0; i < buildings; i++) {   //for each building
+		auto current_building = city.buildings[i];
+		auto current_exterior_mesh = std::make_unique<PGUPV::Mesh>();
+		auto current_interior_mesh = std::make_unique<PGUPV::Mesh>();
+		auto current_parts = current_building.parts;
+
+		std::vector<glm::vec2> todos_vertices;
+
+		for (int j = current_parts.size() - 1; j >= 0; j--) {   //for each part of the building
+			GLint primer_vertice_exterior = (GLint)todos_vertices.size();
+
+			for (const auto& punto_doble : current_parts[j].exterior) {
+				glm::dvec2 punto_relativo = punto_doble - origen;
+				todos_vertices.push_back(glm::vec2(punto_relativo));
+			}
+
+			current_exterior_mesh->addDrawCommand(new PGUPV::DrawArrays(GL_LINE_LOOP, primer_vertice_exterior, (GLsizei)(todos_vertices.size() - primer_vertice_exterior)));
+
+			for (const auto& interior : current_parts[j].interior) {
+				GLint primer_vertice_interior = (GLint)todos_vertices.size();
+
+				for (const auto& punto_doble : interior) {
+					glm::dvec2 punto_relativo = punto_doble - origen;
+					todos_vertices.push_back(glm::vec2(punto_relativo));
+				}
+
+				current_interior_mesh->addDrawCommand(new PGUPV::DrawArrays(GL_LINE_LOOP, primer_vertice_interior, (GLsizei)(todos_vertices.size() - primer_vertice_interior)));
+			}
+		}
+
+
+
+		current_exterior_mesh->addVertices(todos_vertices);
+		meshes_exterior.push_back(std::move(current_exterior_mesh));
+		current_interior_mesh->addVertices(todos_vertices);
+		meshes_interior.push_back(std::move(current_interior_mesh));
+
+	}
 
 	setCameraHandler(std::make_shared<XYPanZoomCamera>(
 		1000.0f, glm::vec3{ 0.0f}));
+
+
 }
 
 void MyRender::render() {
@@ -88,6 +140,16 @@ void MyRender::render() {
 	ConstantUniformColorProgram::use();
 	ConstantUniformColorProgram::setColor(glm::vec4{ 0.8f, 0.1f, 0.1f, 1.0f });
 	boundary->render();
+
+	ConstantUniformColorProgram::setColor(glm::vec4{ 1.0f, 1.0f, 1.0f, 1.0f });
+	for (const auto& mesh : meshes_exterior) {
+		mesh->render();
+	}
+
+	ConstantUniformColorProgram::setColor(glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
+	for (const auto& mesh : meshes_interior) {
+		mesh->render();
+	}
 }
 
 

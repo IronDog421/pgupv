@@ -18,19 +18,43 @@ private:
 };
 
 void MyRender::setup() {
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);  // dark background to test
 
+	auto circle_mesh = std::make_shared<Mesh>();
 	auto mesh = std::make_shared<Mesh>();
+	std::vector<glm::vec3> circle_vertices;
+	for (int i = 0; i < 60; i++) {
+		float angle = glm::radians(i * 360.0f / 60.0f);
+		circle_vertices.push_back({ 0.7f * cos(angle), 0.7f * sin(angle), 0.0f });
+	}
+	circle_mesh->addVertices(circle_vertices);
 	mesh->addVertices({
-		{ -0.5f, -0.5f, 0.0f },
-		{ 0.5f, -0.5f, 0.0f },
-		{ 0.0f, 0.5f, 0.0f }
+		{ -0.7f, -0.7f, 0.0f }, // 0, esquina inferior izquierdo
+		{ 0.7f, -0.7f, 0.0f },  // 1, esquina inferior derecho
+		{ 0.7f, 0.7f, 0.0f },   // 2, esquina superior derecho
+		{ -0.7f, 0.7f, 0.0f },  // 3, esquina superior izquierdo
+		{ 0.0f, 0.0f, 0.0f },   // 4, centro
+		{-0.7f, 0.0f, 0.0f },   // 5, centro izquierda
+		{0.0f, -0.7f, 0.0f },   // 6, centro inferior
+		{ 0.0f, 0.7f, 0.0f },   // 7, centro superior
+		{ 0.7f, 0.0f, 0.0f },   // 8, centro derecho
+	});
+	mesh->addIndices(
+		std::vector<unsigned int>{
+		5, 0, 0, 6, 6, 4, 4, 5,
+		6, 1, 1, 8, 8, 4, 4, 6,
+		4, 8, 8, 2, 2, 7, 7, 4,
+		4, 7, 7, 3, 3, 5, 5, 4
 	});
 	mesh->setColor(glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
-	mesh->addDrawCommand(new DrawArrays(GL_LINE_LOOP, 0, 3));
+	mesh->addDrawCommand(new DrawElements(GL_LINES, 32, GL_UNSIGNED_INT, 0));
+	circle_mesh->setColor(glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f });
+	circle_mesh->addDrawCommand(new DrawArrays(GL_LINE_LOOP, 0, 60));
 
 	model = std::make_shared<Model>();
+	model->addMesh(circle_mesh);
 	model->addMesh(mesh);
+
 
 	ConstantIllumProgramMVP::use();
 }
