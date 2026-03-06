@@ -18,7 +18,7 @@ private:
 };
 
 void MyRender::setup() {
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);  // dark background to test
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	auto circle_mesh = std::make_shared<Mesh>();
 	auto mesh = std::make_shared<Mesh>();
@@ -41,14 +41,12 @@ void MyRender::setup() {
 	});
 	mesh->addIndices(
 		std::vector<unsigned int>{
-		5, 0, 0, 6, 6, 4, 4, 5,
-		6, 1, 1, 8, 8, 4, 4, 6,
-		4, 8, 8, 2, 2, 7, 7, 4,
-		4, 7, 7, 3, 3, 5, 5, 4
+		0, 1, 1, 2, 2, 3, 3, 0,
+		6, 7, 5, 8
 	});
-	mesh->setColor(glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
-	mesh->addDrawCommand(new DrawElements(GL_LINES, 32, GL_UNSIGNED_INT, 0));
-	circle_mesh->setColor(glm::vec4{ 1.0f, 1.0f, 0.0f, 1.0f });
+	mesh->setColor(glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f });
+	mesh->addDrawCommand(new DrawElements(GL_LINES, 12, GL_UNSIGNED_INT, 0));
+	circle_mesh->setColor(glm::vec4{ 1.0f, 0.0f, 0.0f, 1.0f });
 	circle_mesh->addDrawCommand(new DrawArrays(GL_LINE_LOOP, 0, 60));
 
 	model = std::make_shared<Model>();
